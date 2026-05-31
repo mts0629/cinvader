@@ -129,7 +129,7 @@ void print_screen(void) {
         for (int j = 0; j < FIELD_WIDTH; j++) {
             printf("%c", map[i * FIELD_WIDTH + j]);
         }
-        printf("\n");
+        printf("\r\n");
     }
 }
 
