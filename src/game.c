@@ -113,7 +113,40 @@ bool hit_key(void) {
     return false;
 }
 
-void move_player(void) { player.x++; }
+static int get_char(void) {
+    uint8_t c;
+    int n;
+    while ((n = read(0, &c, 1)) < 0) {
+        if (errno != EINTR) {
+            return -1;
+        }
+    }
+
+    if (n == 0) {
+        return -1;
+    }
+
+    return (int)c;
+}
+
+void move_player(void) {
+    switch (get_char()) {
+        case 'a':
+            player.x--;
+            if (player.x < 0) {
+                player.x = 0;
+            }
+            break;
+        case 'd':
+            player.x++;
+            if (player.x > (FIELD_WIDTH - 1)) {
+                player.x = FIELD_WIDTH - 1;
+            }
+            break;
+        default:
+            break;
+    }
+}
 
 void update_map(void) {
     memset(map, ' ', sizeof(map));
