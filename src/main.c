@@ -1,24 +1,24 @@
 #include "game.h"
 
 int main(void) {
-    init_game();
+    if (!init_game()) {
+        quit_game();
+        return -1;
+    }
 
     while (1) {
-        move_player();
+        if (hit_key()) {
+            move_player();
+        }
 
         update_map();
 
         print_screen();
 
         wait();
-
-        // For debug
-        static int n = 0;
-        n++;
-        if (n == 5) {
-            break;
-        }
     }
+
+    quit_game();
 
     return 0;
 }

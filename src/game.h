@@ -1,7 +1,13 @@
 #ifndef GAME_H
 #define GAME_H
 
-void init_game(void);
+#include <stdbool.h>
+
+bool init_game(void);
+
+void quit_game(void);
+
+bool hit_key(void);
 
 void move_player(void);
 
