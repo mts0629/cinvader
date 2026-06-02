@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199309L // For nanosleep()
+
 #include "game.h"
 
 #include <errno.h>
@@ -8,6 +10,7 @@
 #include <string.h>
 #include <sys/select.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #define FIELD_WIDTH 15
@@ -166,4 +169,7 @@ void print_screen(void) {
     }
 }
 
-void wait(void) { sleep(1); }
+void wait(void) {
+    static struct timespec tv = {0, 100000000}; // 0.1 sec
+    nanosleep(&tv, NULL);
+}
