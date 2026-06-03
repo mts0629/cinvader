@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 199309L // For nanosleep()
+#define _POSIX_C_SOURCE 199309L  // For nanosleep()
 
 #include "game.h"
 
@@ -30,6 +30,10 @@ static inline void clear_screen(void) { printf("\033[2J"); }
 
 static inline void reset_cursor_pos(void) { printf("\033[0;0H"); }
 
+static inline void hide_cursor(void) { printf("\033[?25l"); }
+
+static inline void display_cursor(void) { printf("\033[?25h"); }
+
 static void on_signal(const int sig) {
     signal(sig, SIG_IGN);  // Ignore signal temporally
 
@@ -49,9 +53,7 @@ static void on_signal(const int sig) {
 
 static bool init_term(void) {
     // Get current STDOUT settings
-    if (tcgetattr(1, &org_tty) < 0) {
-        return false;
-    }
+    tcgetattr(1, &org_tty);
 
     new_tty = org_tty;
 
@@ -74,9 +76,10 @@ static bool init_term(void) {
     new_tty.c_cc[VTIME] = 0;
 
     if (tcsetattr(1, TCSADRAIN, &new_tty)) {
-        tcsetattr(1, TCSADRAIN, &org_tty);
         return false;
     }
+
+    hide_cursor();
 
     signal(SIGINT, on_signal);
     signal(SIGQUIT, on_signal);
@@ -100,6 +103,7 @@ void quit_game(void) {
     tcsetattr(1, TCSADRAIN, &org_tty);
     clear_screen();
     reset_cursor_pos();
+    display_cursor();
 }
 
 bool hit_key(void) {
@@ -170,6 +174,6 @@ void print_screen(void) {
 }
 
 void wait(void) {
-    static struct timespec tv = {0, 100000000}; // 0.1 sec
+    static struct timespec tv = {0, 100000000};  // 0.1 sec
     nanosleep(&tv, NULL);
 }
