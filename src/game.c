@@ -91,9 +91,13 @@ static bool init_term(void) {
 
 static Pos player;
 
+static bool continue_game;
+
 bool init_game(void) {
     player.x = FIELD_WIDTH / 2;
     player.y = (FIELD_HEIGHT - 1);
+
+    continue_game = true;
 
     return init_term();
 }
@@ -128,8 +132,18 @@ static int get_char(void) {
     return (int)c;
 }
 
-static void move_player(void) {
-    switch (get_char()) {
+static void process_command(const int cmd) {
+    switch (cmd) {
+        case 'q':
+            continue_game = false;
+            break;
+        default:
+            break;
+    }
+}
+
+static void move_player(const int cmd) {
+    switch (cmd) {
         case 'a':
             player.x--;
             if (player.x < 0) {
@@ -171,9 +185,13 @@ static void wait(void) {
 }
 
 void game_main(void) {
-    while (1) {
+    while (continue_game) {
         if (hit_key()) {
-            move_player();
+            int c = get_char();
+
+            process_command(c);
+
+            move_player(c);
         }
 
         update_map();
