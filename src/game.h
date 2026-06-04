@@ -5,16 +5,8 @@
 
 bool init_game(void);
 
+void game_main(void);
+
 void quit_game(void);
-
-bool hit_key(void);
-
-void move_player(void);
-
-void update_map(void);
-
-void print_screen(void);
-
-void wait(void);
 
 #endif  // GAME_H

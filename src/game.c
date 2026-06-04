@@ -98,15 +98,7 @@ bool init_game(void) {
     return init_term();
 }
 
-void quit_game(void) {
-    // Restore original terminal settings
-    tcsetattr(1, TCSADRAIN, &org_tty);
-    clear_screen();
-    reset_cursor_pos();
-    display_cursor();
-}
-
-bool hit_key(void) {
+static bool hit_key(void) {
     fd_set rfd;
     FD_ZERO(&rfd);
     FD_SET(0, &rfd);  // STDIN
@@ -136,7 +128,7 @@ static int get_char(void) {
     return (int)c;
 }
 
-void move_player(void) {
+static void move_player(void) {
     switch (get_char()) {
         case 'a':
             player.x--;
@@ -155,13 +147,13 @@ void move_player(void) {
     }
 }
 
-void update_map(void) {
+static void update_map(void) {
     memset(map, ' ', sizeof(map));
 
     map[player.y * FIELD_WIDTH + player.x] = PLAYER;
 }
 
-void print_screen(void) {
+static void print_screen(void) {
     clear_screen();
     reset_cursor_pos();
 
@@ -173,7 +165,29 @@ void print_screen(void) {
     }
 }
 
-void wait(void) {
+static void wait(void) {
     static struct timespec tv = {0, 100000000};  // 0.1 sec
     nanosleep(&tv, NULL);
+}
+
+void game_main(void) {
+    while (1) {
+        if (hit_key()) {
+            move_player();
+        }
+
+        update_map();
+
+        print_screen();
+
+        wait();
+    }
+}
+
+void quit_game(void) {
+    // Restore original terminal settings
+    tcsetattr(1, TCSADRAIN, &org_tty);
+    clear_screen();
+    reset_cursor_pos();
+    display_cursor();
 }

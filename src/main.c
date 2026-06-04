@@ -6,17 +6,7 @@ int main(void) {
         return -1;
     }
 
-    while (1) {
-        if (hit_key()) {
-            move_player();
-        }
-
-        update_map();
-
-        print_screen();
-
-        wait();
-    }
+    game_main();
 
     quit_game();
 
