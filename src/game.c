@@ -15,14 +15,21 @@
 
 #define FIELD_WIDTH 15
 #define FIELD_HEIGHT 10
+#define SHELL_MAX 3
 
 #define PLAYER 'A'
+#define SHELL 'i'
 
 static char map[FIELD_HEIGHT * FIELD_WIDTH] = {0};
 
 typedef struct {
     int x, y;
 } Pos;
+
+typedef struct {
+    Pos pos;
+    bool exist;
+} Shell;
 
 struct termios org_tty, new_tty;
 
@@ -90,12 +97,17 @@ static bool init_term(void) {
 }
 
 static Pos player;
+static Shell shell[SHELL_MAX];
 
 static bool continue_game;
 
 bool init_game(void) {
     player.x = FIELD_WIDTH / 2;
     player.y = (FIELD_HEIGHT - 1);
+
+    for (int i = 0; i < SHELL_MAX; i++) {
+        shell[i].exist = false;
+    }
 
     continue_game = true;
 
@@ -144,6 +156,16 @@ static void process_command(const int cmd) {
 
 static void move_player(const int cmd) {
     switch (cmd) {
+        case 'j':
+            for (int i = 0; i < SHELL_MAX; i++) {
+                if (!shell[i].exist) {
+                    shell[i].pos.x = player.x;
+                    shell[i].pos.y = player.y - 1;
+                    shell[i].exist = true;
+                    break;
+                }
+            }
+            break;
         case 'a':
             player.x--;
             if (player.x < 0) {
@@ -161,10 +183,28 @@ static void move_player(const int cmd) {
     }
 }
 
+static void move_shells(void) {
+    for (int i = 0; i < SHELL_MAX; i++) {
+        if (shell[i].exist) {
+            shell[i].pos.y--;
+
+            if (shell[i].pos.y < 0) {
+                shell[i].exist = false;
+            }
+        }
+    }
+}
+
 static void update_map(void) {
     memset(map, ' ', sizeof(map));
 
     map[player.y * FIELD_WIDTH + player.x] = PLAYER;
+
+    for (int i = 0; i < SHELL_MAX; i++) {
+        if (shell[i].exist) {
+            map[shell[i].pos.y * FIELD_WIDTH + shell[i].pos.x] = SHELL;
+        }
+    }
 }
 
 static void print_screen(void) {
@@ -193,6 +233,8 @@ void game_main(void) {
 
             move_player(c);
         }
+
+        move_shells();
 
         update_map();
 
