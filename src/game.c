@@ -15,9 +15,15 @@
 
 #define FIELD_WIDTH 15
 #define FIELD_HEIGHT 10
+#define ENEMY_BLOCK_HEIGHT 3
+#define ENEMY_BLOCK_WIDTH 7
+#define ENEMY_BLOCK_ORG_Y 1
+#define ENEMY_BLOCK_ORG_X 4
+#define ENEMY_MAX (ENEMY_BLOCK_HEIGHT * ENEMY_BLOCK_WIDTH)
 #define SHELL_MAX 3
 
 #define PLAYER 'A'
+#define ENEMY 'W'
 #define SHELL 'i'
 
 static char map[FIELD_HEIGHT * FIELD_WIDTH] = {0};
@@ -30,6 +36,11 @@ typedef struct {
     Pos pos;
     bool exist;
 } Shell;
+
+typedef struct {
+    Pos pos;
+    bool exist;
+} Enemy;
 
 struct termios org_tty, new_tty;
 
@@ -97,6 +108,7 @@ static bool init_term(void) {
 }
 
 static Pos player;
+static Enemy enemy[ENEMY_MAX];
 static Shell shell[SHELL_MAX];
 
 static bool continue_game;
@@ -104,6 +116,18 @@ static bool continue_game;
 bool init_game(void) {
     player.x = FIELD_WIDTH / 2;
     player.y = (FIELD_HEIGHT - 1);
+
+    int idx = 0;
+    for (int i = ENEMY_BLOCK_ORG_Y;
+         i < (ENEMY_BLOCK_ORG_Y + ENEMY_BLOCK_HEIGHT); i++) {
+        for (int j = ENEMY_BLOCK_ORG_X;
+             j < (ENEMY_BLOCK_ORG_X + ENEMY_BLOCK_WIDTH); j++) {
+            enemy[idx].pos.y = i;
+            enemy[idx].pos.x = j;
+            enemy[idx].exist = true;
+            idx++;
+        }
+    }
 
     for (int i = 0; i < SHELL_MAX; i++) {
         shell[i].exist = false;
@@ -195,10 +219,61 @@ static void move_shells(void) {
     }
 }
 
+static void move_enemies(void) {
+    static bool move_right = true;
+
+    bool switch_dir = false;
+    for (int i = 0; i < ENEMY_MAX; i++) {
+        if (enemy[i].exist) {
+            if (move_right) {
+                enemy[i].pos.x++;
+            } else {
+                enemy[i].pos.x--;
+            }
+
+            // Switch moving direction if one of enemies reach to the edge
+            if ((enemy[i].pos.x == (FIELD_WIDTH - 1)) ||
+                (enemy[i].pos.x == 0)) {
+                switch_dir = true;
+            }
+        }
+    }
+
+    if (switch_dir) {
+        move_right = !move_right;
+    }
+}
+
+static void check_collision(void) {
+    for (int i = 0; i < SHELL_MAX; i++) {
+        if (!shell[i].exist) {
+            continue;
+        }
+
+        for (int j = 0; j < ENEMY_MAX; j++) {
+            if (!enemy[j].exist) {
+                continue;
+            }
+
+            if ((enemy[j].pos.x == shell[i].pos.x) &&
+                (enemy[j].pos.y == shell[i].pos.y)) {
+                enemy[j].exist = false;
+                shell[i].exist = false;
+            }
+        }
+    }
+}
+
 static void update_map(void) {
     memset(map, ' ', sizeof(map));
 
     map[player.y * FIELD_WIDTH + player.x] = PLAYER;
+
+    for (int i = 0; i < ENEMY_MAX; i++) {
+        if (enemy[i].exist) {
+            map[enemy[i].pos.y * FIELD_WIDTH + enemy[i].pos.x] = ENEMY;
+        }
+    }
 
     for (int i = 0; i < SHELL_MAX; i++) {
         if (shell[i].exist) {
@@ -235,6 +310,10 @@ void game_main(void) {
         }
 
         move_shells();
+
+        move_enemies();
+
+        check_collision();
 
         update_map();
 
