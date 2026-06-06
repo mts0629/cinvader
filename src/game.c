@@ -294,6 +294,16 @@ static void print_screen(void) {
     }
 }
 
+static void check_gameover(void) {
+    for (int i = 0; i < ENEMY_MAX; i++) {
+        if (enemy[i].exist) {
+            return;
+        }
+    }
+
+    continue_game = false;
+}
+
 static void wait(void) {
     static struct timespec tv = {0, 100000000};  // 0.1 sec
     nanosleep(&tv, NULL);
@@ -318,6 +328,8 @@ void game_main(void) {
         update_map();
 
         print_screen();
+
+        check_gameover();
 
         wait();
     }
