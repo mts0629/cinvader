@@ -20,6 +20,7 @@
 #define ENEMY_BLOCK_ORG_Y 1
 #define ENEMY_BLOCK_ORG_X 4
 #define ENEMY_MAX (ENEMY_BLOCK_HEIGHT * ENEMY_BLOCK_WIDTH)
+#define INTERVAL 2
 #define SHELL_MAX 3
 
 #define PLAYER 'A'
@@ -133,6 +134,8 @@ bool init_game(void) {
         shell[i].exist = false;
     }
 
+    srand(time(NULL));
+
     continue_game = true;
 
     return init_term();
@@ -220,6 +223,12 @@ static void move_shells(void) {
 }
 
 static void move_enemies(void) {
+    static int interval = INTERVAL;
+    if (interval) {
+        interval--;
+        return;
+    }
+
     static bool move_right = true;
 
     bool switch_dir = false;
@@ -242,6 +251,8 @@ static void move_enemies(void) {
     if (switch_dir) {
         move_right = !move_right;
     }
+
+    interval = INTERVAL;
 }
 
 static void check_collision(void) {
