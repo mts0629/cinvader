@@ -229,27 +229,36 @@ static void move_enemies(void) {
         return;
     }
 
-    static bool move_right = true;
+    static int move_dir = 0;
 
     bool switch_dir = false;
     for (int i = 0; i < ENEMY_MAX; i++) {
         if (enemy[i].exist) {
-            if (move_right) {
-                enemy[i].pos.x++;
-            } else {
-                enemy[i].pos.x--;
-            }
-
             // Switch moving direction if one of enemies reach to the edge
-            if ((enemy[i].pos.x == (FIELD_WIDTH - 1)) ||
-                (enemy[i].pos.x == 0)) {
+            if (move_dir == 0) {
+                enemy[i].pos.x++;
+                if (enemy[i].pos.x == (FIELD_WIDTH - 1)) {
+                    switch_dir = true;
+                }
+            } else if (move_dir == 1) {
+                enemy[i].pos.y++;
+                switch_dir = true;
+            } else if (move_dir == 2) {
+                enemy[i].pos.x--;
+                if (enemy[i].pos.x == 0) {
+                    switch_dir = true;
+                }
+            } else {
+                enemy[i].pos.y++;
                 switch_dir = true;
             }
         }
     }
 
+    // Rotate direction:
+    // right -> down -> left -> down -> ...
     if (switch_dir) {
-        move_right = !move_right;
+        move_dir = (move_dir + 1) % 4;
     }
 
     interval = INTERVAL;
