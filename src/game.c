@@ -315,13 +315,20 @@ static void print_screen(void) {
 }
 
 static void check_gameover(void) {
+    bool no_enemies = true;
+
     for (int i = 0; i < ENEMY_MAX; i++) {
         if (enemy[i].exist) {
-            return;
+            no_enemies = false;
+            if (enemy[i].pos.y == (FIELD_HEIGHT - 1)) {
+                continue_game = false;
+            }
         }
     }
 
-    continue_game = false;
+    if (no_enemies) {
+        continue_game = false;
+    }
 }
 
 static void wait(void) {
