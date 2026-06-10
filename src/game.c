@@ -36,12 +36,7 @@ typedef struct {
 typedef struct {
     Pos pos;
     bool exist;
-} Shell;
-
-typedef struct {
-    Pos pos;
-    bool exist;
-} Enemy;
+} Object;
 
 struct termios org_tty, new_tty;
 
@@ -108,15 +103,16 @@ static bool init_term(void) {
     return true;
 }
 
-static Pos player;
-static Enemy enemy[ENEMY_MAX];
-static Shell shell[SHELL_MAX];
+static Object player;
+static Object enemy[ENEMY_MAX];
+static Object shell[SHELL_MAX];
 
 static bool continue_game;
 
 bool init_game(void) {
-    player.x = FIELD_WIDTH / 2;
-    player.y = (FIELD_HEIGHT - 1);
+    player.pos.x = FIELD_WIDTH / 2;
+    player.pos.y = (FIELD_HEIGHT - 1);
+    player.exist = true;
 
     int idx = 0;
     for (int i = ENEMY_BLOCK_ORG_Y;
@@ -186,23 +182,23 @@ static void move_player(const int cmd) {
         case 'j':
             for (int i = 0; i < SHELL_MAX; i++) {
                 if (!shell[i].exist) {
-                    shell[i].pos.x = player.x;
-                    shell[i].pos.y = player.y - 1;
+                    shell[i].pos.x = player.pos.x;
+                    shell[i].pos.y = player.pos.y - 1;
                     shell[i].exist = true;
                     break;
                 }
             }
             break;
         case 'a':
-            player.x--;
-            if (player.x < 0) {
-                player.x = 0;
+            player.pos.x--;
+            if (player.pos.x < 0) {
+                player.pos.x = 0;
             }
             break;
         case 'd':
-            player.x++;
-            if (player.x > (FIELD_WIDTH - 1)) {
-                player.x = FIELD_WIDTH - 1;
+            player.pos.x++;
+            if (player.pos.x > (FIELD_WIDTH - 1)) {
+                player.pos.x = FIELD_WIDTH - 1;
             }
             break;
         default:
@@ -287,7 +283,7 @@ static void check_collision(void) {
 static void update_map(void) {
     memset(map, ' ', sizeof(map));
 
-    map[player.y * FIELD_WIDTH + player.x] = PLAYER;
+    map[player.pos.y * FIELD_WIDTH + player.pos.x] = PLAYER;
 
     for (int i = 0; i < ENEMY_MAX; i++) {
         if (enemy[i].exist) {
