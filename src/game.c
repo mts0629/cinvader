@@ -299,6 +299,8 @@ static void update_map(void) {
 }
 
 static void print_screen(void) {
+    update_map();
+
     clear_screen();
     reset_cursor_pos();
 
@@ -334,25 +336,24 @@ static void wait(void) {
 
 void game_main(void) {
     while (continue_game) {
+        int cmd = 0;
+
         if (hit_key()) {
-            int c = get_char();
-
-            process_command(c);
-
-            move_player(c);
+            cmd = get_char();
+            process_command(cmd);
         }
+
+        move_player(cmd);
+
+        print_screen();
+
+        check_gameover();
 
         move_shells();
 
         move_enemies();
 
         check_collision();
-
-        update_map();
-
-        print_screen();
-
-        check_gameover();
 
         wait();
     }
