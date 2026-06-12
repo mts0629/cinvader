@@ -312,6 +312,13 @@ static void print_screen(void) {
     }
 }
 
+static void wait_ms(const uint32_t n) {
+    struct timespec tv = {0, 0};
+    tv.tv_sec = n / 1000;
+    tv.tv_nsec = (n % 1000) * 1000000;
+    nanosleep(&tv, NULL);
+}
+
 static void check_gameover(void) {
     bool no_enemies = true;
 
@@ -319,19 +326,16 @@ static void check_gameover(void) {
         if (enemy[i].exist) {
             no_enemies = false;
             if (enemy[i].pos.y == (FIELD_HEIGHT - 1)) {
+                wait_ms(1000);
                 continue_game = false;
             }
         }
     }
 
     if (no_enemies) {
+        wait_ms(1000);
         continue_game = false;
     }
-}
-
-static void wait(void) {
-    static struct timespec tv = {0, 100000000};  // 0.1 sec
-    nanosleep(&tv, NULL);
 }
 
 void game_main(void) {
@@ -355,7 +359,7 @@ void game_main(void) {
 
         check_collision();
 
-        wait();
+        wait_ms(100);
     }
 }
 
