@@ -27,8 +27,6 @@
 #define ENEMY 'W'
 #define SHELL 'i'
 
-static char map[FIELD_HEIGHT * FIELD_WIDTH] = {0};
-
 typedef struct {
     int x, y;
 } Pos;
@@ -43,6 +41,10 @@ struct termios org_tty, new_tty;
 static inline void clear_screen(void) { printf("\033[2J"); }
 
 static inline void reset_cursor_pos(void) { printf("\033[0;0H"); }
+
+static inline void set_cursor_pos(const int x, const int y) {
+    printf("\033[%d;%dH", y, x);
+}
 
 static inline void hide_cursor(void) { printf("\033[?25l"); }
 
@@ -280,36 +282,27 @@ static void check_collision(void) {
     }
 }
 
-static void update_map(void) {
-    memset(map, ' ', sizeof(map));
-
-    map[player.pos.y * FIELD_WIDTH + player.pos.x] = PLAYER;
+static void print_screen(void) {
+    clear_screen();
 
     for (int i = 0; i < ENEMY_MAX; i++) {
         if (enemy[i].exist) {
-            map[enemy[i].pos.y * FIELD_WIDTH + enemy[i].pos.x] = ENEMY;
+            set_cursor_pos(enemy[i].pos.x, enemy[i].pos.y);
+            printf("%c", ENEMY);
         }
     }
 
     for (int i = 0; i < SHELL_MAX; i++) {
         if (shell[i].exist) {
-            map[shell[i].pos.y * FIELD_WIDTH + shell[i].pos.x] = SHELL;
+            set_cursor_pos(shell[i].pos.x, shell[i].pos.y);
+            printf("%c", SHELL);
         }
     }
-}
 
-static void print_screen(void) {
-    update_map();
+    set_cursor_pos(player.pos.x, player.pos.y);
+    printf("%c", PLAYER);
 
-    clear_screen();
-    reset_cursor_pos();
-
-    for (int i = 0; i < FIELD_HEIGHT; i++) {
-        for (int j = 0; j < FIELD_WIDTH; j++) {
-            printf("%c", map[i * FIELD_WIDTH + j]);
-        }
-        printf("\r\n");
-    }
+    fflush(stdout);
 }
 
 static void wait_ms(const uint32_t n) {
