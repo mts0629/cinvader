@@ -29,10 +29,11 @@
 
 typedef struct {
     int x, y;
-} Pos;
+} Vec;
 
 typedef struct {
-    Pos pos;
+    Vec pos;
+    Vec v;
     bool exist;
 } Object;
 
@@ -114,6 +115,8 @@ static bool continue_game;
 bool init_game(void) {
     player.pos.x = FIELD_WIDTH / 2;
     player.pos.y = (FIELD_HEIGHT - 1);
+    player.v.x = 0;
+    player.v.y = 0;
     player.exist = true;
 
     int idx = 0;
@@ -121,8 +124,10 @@ bool init_game(void) {
          i < (ENEMY_BLOCK_ORG_Y + ENEMY_BLOCK_HEIGHT); i++) {
         for (int j = ENEMY_BLOCK_ORG_X;
              j < (ENEMY_BLOCK_ORG_X + ENEMY_BLOCK_WIDTH); j++) {
-            enemy[idx].pos.y = i;
             enemy[idx].pos.x = j;
+            enemy[idx].pos.y = i;
+            enemy[idx].v.x = 1;
+            enemy[idx].v.y = 0;
             enemy[idx].exist = true;
             idx++;
         }
@@ -179,39 +184,47 @@ static void process_command(const int cmd) {
     }
 }
 
-static void move_player(const int cmd) {
+static void action(const int cmd) {
+    player.v.x = 0;
     switch (cmd) {
         case 'j':
             for (int i = 0; i < SHELL_MAX; i++) {
                 if (!shell[i].exist) {
                     shell[i].pos.x = player.pos.x;
                     shell[i].pos.y = player.pos.y - 1;
+                    shell[i].v.x = 0;
+                    shell[i].v.y = -1;
                     shell[i].exist = true;
                     break;
                 }
             }
             break;
         case 'a':
-            player.pos.x--;
-            if (player.pos.x < 0) {
-                player.pos.x = 0;
-            }
+            player.v.x = -1;
             break;
         case 'd':
-            player.pos.x++;
-            if (player.pos.x > (FIELD_WIDTH - 1)) {
-                player.pos.x = FIELD_WIDTH - 1;
-            }
+            player.v.x = 1;
             break;
         default:
             break;
     }
 }
 
+static void move_player(void) {
+    player.pos.x += player.v.x;
+
+    if (player.pos.x < 0) {
+        player.pos.x = 0;
+    }
+    if (player.pos.x > (FIELD_WIDTH - 1)) {
+        player.pos.x = FIELD_WIDTH - 1;
+    }
+}
+
 static void move_shells(void) {
     for (int i = 0; i < SHELL_MAX; i++) {
         if (shell[i].exist) {
-            shell[i].pos.y--;
+            shell[i].pos.y += shell[i].v.y;
 
             if (shell[i].pos.y < 0) {
                 shell[i].exist = false;
@@ -234,20 +247,24 @@ static void move_enemies(void) {
         if (enemy[i].exist) {
             // Switch moving direction if one of enemies reach to the edge
             if (move_dir == 0) {
-                enemy[i].pos.x++;
-                if (enemy[i].pos.x == (FIELD_WIDTH - 1)) {
-                    switch_dir = true;
-                }
+                enemy[i].v.x = 1;
+                enemy[i].v.y = 0;
             } else if (move_dir == 1) {
-                enemy[i].pos.y++;
-                switch_dir = true;
+                enemy[i].v.x = 0;
+                enemy[i].v.y = 1;
             } else if (move_dir == 2) {
-                enemy[i].pos.x--;
-                if (enemy[i].pos.x == 0) {
-                    switch_dir = true;
-                }
+                enemy[i].v.x = -1;
+                enemy[i].v.y = 0;
             } else {
-                enemy[i].pos.y++;
+                enemy[i].v.x = 0;
+                enemy[i].v.y = 1;
+            }
+
+            enemy[i].pos.x += enemy[i].v.x;
+            enemy[i].pos.y += enemy[i].v.y;
+
+            if ((enemy[i].pos.x == 0) ||
+                (enemy[i].pos.x == (FIELD_WIDTH - 1))) {
                 switch_dir = true;
             }
         }
@@ -340,11 +357,13 @@ void game_main(void) {
             process_command(cmd);
         }
 
-        move_player(cmd);
+        action(cmd);
 
         print_screen();
 
         check_gameover();
+
+        move_player();
 
         move_shells();
 
