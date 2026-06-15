@@ -336,6 +336,9 @@ static void check_gameover(void) {
         if (enemy[i].exist) {
             no_enemies = false;
             if (enemy[i].pos.y == (FIELD_HEIGHT - 1)) {
+                set_cursor_pos((FIELD_WIDTH / 2) - 4, (FIELD_HEIGHT / 2));
+                printf("GAMEOVER");
+                fflush(stdout);
                 wait_ms(1000);
                 continue_game = false;
             }
@@ -343,6 +346,9 @@ static void check_gameover(void) {
     }
 
     if (no_enemies) {
+        set_cursor_pos((FIELD_WIDTH / 2) - 3, (FIELD_HEIGHT / 2));
+        printf("CLEAR!");
+        fflush(stdout);
         wait_ms(1000);
         continue_game = false;
     }
