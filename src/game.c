@@ -263,7 +263,7 @@ static void move_enemies(void) {
             enemy[i].pos.x += enemy[i].v.x;
             enemy[i].pos.y += enemy[i].v.y;
 
-            if ((enemy[i].pos.x == 0) ||
+            if ((enemy[i].pos.x == 1) ||
                 (enemy[i].pos.x == (FIELD_WIDTH - 1))) {
                 switch_dir = true;
             }
