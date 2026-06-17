@@ -111,6 +111,8 @@ static Object enemy[ENEMY_MAX];
 static Object shell[SHELL_MAX];
 
 static bool continue_game;
+static int num_enemies;
+static int num_shells;
 
 bool init_game(void) {
     player.pos.x = FIELD_WIDTH / 2;
@@ -118,6 +120,9 @@ bool init_game(void) {
     player.v.x = 0;
     player.v.y = 0;
     player.exist = true;
+
+    num_enemies = 0;
+    num_shells = 0;
 
     int idx = 0;
     for (int i = ENEMY_BLOCK_ORG_Y;
@@ -130,6 +135,7 @@ bool init_game(void) {
             enemy[idx].v.y = 0;
             enemy[idx].exist = true;
             idx++;
+            num_enemies++;
         }
     }
 
@@ -184,20 +190,30 @@ static void process_command(const int cmd) {
     }
 }
 
+static void shot_shell(void) {
+    if (num_shells == SHELL_MAX) {
+        return;
+    }
+
+    for (int i = 0; i < SHELL_MAX; i++) {
+        if (!shell[i].exist) {
+            shell[i].pos.x = player.pos.x;
+            shell[i].pos.y = player.pos.y - 1;
+            shell[i].v.x = 0;
+            shell[i].v.y = -1;
+            shell[i].exist = true;
+            break;
+        }
+    }
+
+    num_shells++;
+}
+
 static void action(const int cmd) {
     player.v.x = 0;
     switch (cmd) {
         case 'j':
-            for (int i = 0; i < SHELL_MAX; i++) {
-                if (!shell[i].exist) {
-                    shell[i].pos.x = player.pos.x;
-                    shell[i].pos.y = player.pos.y - 1;
-                    shell[i].v.x = 0;
-                    shell[i].v.y = -1;
-                    shell[i].exist = true;
-                    break;
-                }
-            }
+            shot_shell();
             break;
         case 'a':
             player.v.x = -1;
@@ -228,6 +244,7 @@ static void move_shells(void) {
 
             if (shell[i].pos.y < 0) {
                 shell[i].exist = false;
+                num_shells--;
             }
         }
     }
@@ -294,6 +311,8 @@ static void check_collision(void) {
                 (enemy[j].pos.y == shell[i].pos.y)) {
                 enemy[j].exist = false;
                 shell[i].exist = false;
+                num_enemies--;
+                num_shells--;
             }
         }
     }
@@ -330,11 +349,8 @@ static void wait_ms(const uint32_t n) {
 }
 
 static void check_gameover(void) {
-    bool no_enemies = true;
-
     for (int i = 0; i < ENEMY_MAX; i++) {
         if (enemy[i].exist) {
-            no_enemies = false;
             if (enemy[i].pos.y == (FIELD_HEIGHT - 1)) {
                 set_cursor_pos((FIELD_WIDTH / 2) - 4, (FIELD_HEIGHT / 2));
                 printf("GAMEOVER");
@@ -345,7 +361,7 @@ static void check_gameover(void) {
         }
     }
 
-    if (no_enemies) {
+    if (num_enemies == 0) {
         set_cursor_pos((FIELD_WIDTH / 2) - 3, (FIELD_HEIGHT / 2));
         printf("CLEAR!");
         fflush(stdout);
