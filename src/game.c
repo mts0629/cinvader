@@ -113,6 +113,9 @@ static Object shell[SHELL_MAX];
 static bool continue_game;
 static int num_enemies;
 static int num_shells;
+static int enemy_interval;
+static int enemy_move_dir;
+static bool enemy_switch_dir;
 
 bool init_game(void) {
     player.pos.x = FIELD_WIDTH / 2;
@@ -123,6 +126,9 @@ bool init_game(void) {
 
     num_enemies = 0;
     num_shells = 0;
+    enemy_interval = INTERVAL;
+    enemy_move_dir = 0;
+    enemy_switch_dir = false;
 
     int idx = 0;
     for (int i = ENEMY_BLOCK_ORG_Y;
@@ -251,28 +257,28 @@ static void move_shells(void) {
 }
 
 static void move_enemies(void) {
-    static int interval = INTERVAL;
-    if (interval) {
-        interval--;
+    if (enemy_interval) {
+        enemy_interval--;
         return;
     }
 
-    static int move_dir = 0;
-
-    bool switch_dir = false;
     for (int i = 0; i < ENEMY_MAX; i++) {
         if (enemy[i].exist) {
             // Switch moving direction if one of enemies reach to the edge
-            if (move_dir == 0) {
+            if (enemy_move_dir == 0) {
+                // Right
                 enemy[i].v.x = 1;
                 enemy[i].v.y = 0;
-            } else if (move_dir == 1) {
+            } else if (enemy_move_dir == 1) {
+                // Down
                 enemy[i].v.x = 0;
                 enemy[i].v.y = 1;
-            } else if (move_dir == 2) {
+            } else if (enemy_move_dir == 2) {
+                // Left
                 enemy[i].v.x = -1;
                 enemy[i].v.y = 0;
             } else {
+                // Down
                 enemy[i].v.x = 0;
                 enemy[i].v.y = 1;
             }
@@ -282,18 +288,19 @@ static void move_enemies(void) {
 
             if ((enemy[i].pos.x == 1) ||
                 (enemy[i].pos.x == (FIELD_WIDTH - 1))) {
-                switch_dir = true;
+                enemy_switch_dir = true;
             }
         }
     }
 
     // Rotate direction:
     // right -> down -> left -> down -> ...
-    if (switch_dir) {
-        move_dir = (move_dir + 1) % 4;
+    if (enemy_switch_dir) {
+        enemy_move_dir = (enemy_move_dir + 1) % 4;
+        enemy_switch_dir = false;
     }
 
-    interval = INTERVAL;
+    enemy_interval = INTERVAL;
 }
 
 static void check_collision(void) {
